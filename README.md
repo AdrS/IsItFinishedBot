@@ -3,13 +3,19 @@ A utility for posting messages to slack when a shell command finishes
 
 # Examples
 - Send a message to a user
+
   ```./iifb.py -u adrs -m "hello"```
 - Send a file to a user
+
   ```./iifb.py -u adrs setup.txt```
 - Tell user when a long running command finishes
+
   ```./iifb.py -u adrs -s "curl http://example.com/large_file -o file"```
+
 - Run command and upload output to slack
+
   ```./iifb.py -u adrs -s "ls -l > tmp.txt" tmp.txt```
+  ![What results look like in slack](https://github.com/AdrS/IsItFinishedBot/blob/master/images/example.png)
 
 # Usage
 ```
@@ -41,3 +47,10 @@ Options:
   -t TOKEN, --token=TOKEN
                         Authentication token
 ```
+
+# Warnings
+Slack limits file uploads to 1mb. Files are automatically truncated to stay within these limits.
+![Slack file limits](https://github.com/AdrS/IsItFinishedBot/blob/master/images/file_too_big.png)
+
+# Credits
+Duck logo is from [Wikipedia](https://commons.wikimedia.org/wiki/File:Creative-Tail-Animal-duck.svg) and is licensed under the Creative Commons.
