@@ -1,6 +1,10 @@
+#!/usr/bin/python3
+
 import json
+import optparse
 import os
-from slackclient import SlackClient
+import slack
+import sys
 
 #TODO: cache info for 24 hours
 
@@ -10,57 +14,39 @@ def load_config():
 		if 'Token' in config:
 			return config['Token']
 
-slack_token = load_config()
-sc = SlackClient(slack_token)
 
-def just_one(items):
-	'returns the only item in the list if the list has exactly one element'
-	if len(items) == 1:
-		return items[0]
+if __name__ == '__main__':
+	parser = optparse.OptionParser('''usage: %prog [options] [files]
+A utility for running scripts and posting the results to slack.
 
-def get_members_list():
-	reply = sc.api_call('users.list')
-	if not reply['ok']: return
-	return reply['members']
+If a shell command is specified, the shell command is run. The runtime and
+return code are posted to slack along with any files and messages.
 
-def get_user(username):
-	members = get_members_list()
-	if not members: return
-	return just_one([m for m in members if m['name'] == username])
+If a message is specified, the message is sent to specified user or channel.
 
-def get_user_id(username):
-	user = get_user(username)
-	if not user: return
-	return user['id']
+The files specified do not need to exist. (ex: They could be logs generated
+by the shell command)
 
-def get_user_dm_channel(username):
-	user_id = get_user_id(username)
-	# Could not get user id
-	if not user_id: return
+By default, an authentication token is read from "~/.iifb.json". To
+override this behavior, user the -t <token> option.
+''')
 
-	# Get list of im channels
-	reply = sc.api_call('im.list')
-	if not reply['ok']: return
-	return just_one([im for im in reply['ims'] if im['user'] == user_id])
+	parser.add_option('-u', '--user', help='User to send direct message to')
+	parser.add_option('-c', '--channel', help='Channel to post message to')
+	parser.add_option('-m', '--message', help='Message to post')
+	parser.add_option('-s', '--shell-command', help='Shell command to run')
+	parser.add_option('-t', '--token', help='Authentication token')
 
-def get_dm_id(username):
-	dm = get_user_dm_channel(username)
-	if not dm: return
-	return dm['id']
+	(options, files) = parser.parse_args()
 
-def get_channel(channel_name):
-	reply = sc.api_call('channels.list')
-	if not reply['ok']: return
-	return just_one([c for c in reply['channels'] if c['name'] == channel_name])
+	# Check arguments
+	if not (options.user or options.channel):
+		print('error: must specify a user to dm or a channel to post to')
+		sys.exit(1)
 
-def get_channel_id(channel_name):
-	channel = get_channel(channel_name)
-	if not channel: return
-	return channel['id']
+	if not (options.message or files or options.shell_command):
+		print('error: must specify a message or files to send or a shell command')
+		sys.exit(1)
 
-def dm_user(username, message):
-	#TODO: add support for sending attachements
-	dm_channel_id = get_dm_id(username)
-	if not dm_channel_id: return
-	reply = sc.api_call('chat.postMessage',channel=dm_channel_id, text=message)
-	return reply
+	token = options.token or load_config()
+	slack.sc = slack.SlackClient(token)
