@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+from datetime import datetime
 import json
 import optparse
 import os
 import slack
+import subprocess
 import sys
 
 #TODO: cache info for 24 hours
@@ -50,3 +52,25 @@ override this behavior, user the -t <token> option.
 
 	token = options.token or load_config()
 	slack.sc = slack.SlackClient(token)
+
+	# TODO: Check that user/channel exists so we can fail early
+	message = options.message or ''
+
+	# Run shell command and keep track runtime + return code
+	if options.shell_command:
+		start_time = datetime.now()
+
+		# Should I capture output?
+		return_code = subprocess.call(options.shell_command, shell=True)
+
+		runtime = datetime.now() - start_time
+		message = '\n'.join([message,
+					'Command: "%s"' % options.shell_command,
+					'Runtime: %s' % runtime,
+					'Status: %d' % return_code])
+	print(message)
+	if options.user:
+		if options.message:
+			pass
+		for f in files:
+			pass
