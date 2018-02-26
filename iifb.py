@@ -16,6 +16,26 @@ def load_config():
 		if 'Token' in config:
 			return config['Token']
 
+def get_channel_ids(user, channel):
+	# Get ids of channels to post to
+	channel_ids = []
+	if user:
+		uid = slack.get_dm_id(options.user)
+		if not uid:
+			print('error: could not get user id')
+		else:
+			channel_ids.append(uid)
+	if options.channel:
+		cid = slack.get_channel_id(options.channel)
+		if not cid:
+			print('error: could not get channel id')
+		else:
+			channel_ids.append(uid)
+
+	if not channel_ids:
+		print('error: could not get any channel ids to sent to')
+		sys.exit(1)
+	return channel_ids
 
 if __name__ == '__main__':
 	parser = optparse.OptionParser('''usage: %prog [options] [files]
@@ -53,7 +73,10 @@ override this behavior, user the -t <token> option.
 	token = options.token or load_config()
 	slack.sc = slack.SlackClient(token)
 
-	# TODO: Check that user/channel exists so we can fail early
+	# Check that user/channel exists so we can fail early
+	channel_ids = get_channel_ids(options.user, options.channel)
+	assert(channel_ids)
+
 	message = options.message or ''
 
 	# Run shell command and keep track runtime + return code
@@ -69,28 +92,13 @@ override this behavior, user the -t <token> option.
 					'Runtime: %s' % runtime,
 					'Status: %d' % return_code])
 
-	# Get ids of channels to post to
-	channel_ids = []
-	if options.user:
-		uid = slack.get_dm_id(options.user)
-		if not uid:
-			print('error: could not get user id')
-		else:
-			channel_ids.append(uid)
-	if options.channel:
-		cid = slack.get_channel_id(options.channel)
-		if not cid:
-			print('error: could not get channel id')
-		else:
-			channel_ids.append(uid)
-
-	if not channel_ids:
-		print('error: could not get any channel ids to sent to')
-		sys.exit(1)
+		# Get fresh channel ids if command took > 1hr to run
+		if runtime.total_seconds() > 60*60:
+			channel_ids = get_channel_ids(options.user, options.channel)
 
 	if message:
 		res = slack.post_message(message, channel_ids)
-		print(res)
+		#print(res)
 		#TODO: check for errors
 
 	for f in files:
