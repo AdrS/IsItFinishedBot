@@ -68,9 +68,32 @@ override this behavior, user the -t <token> option.
 					'Command: "%s"' % options.shell_command,
 					'Runtime: %s' % runtime,
 					'Status: %d' % return_code])
-	print(message)
+
+	# Get ids of channels to post to
+	channel_ids = []
 	if options.user:
-		if options.message:
-			pass
-		for f in files:
-			pass
+		uid = slack.get_dm_id(options.user)
+		if not uid:
+			print('error: could not get user id')
+		else:
+			channel_ids.append(uid)
+	if options.channel:
+		cid = slack.get_channel_id(options.channel)
+		if not cid:
+			print('error: could not get channel id')
+		else:
+			channel_ids.append(uid)
+
+	if not channel_ids:
+		print('error: could not get any channel ids to sent to')
+		sys.exit(1)
+
+	if message:
+		res = slack.post_message(message, channel_ids)
+		print(res)
+		#TODO: check for errors
+
+	for f in files:
+		res = slack.post_file(f, channel_ids)
+		if not res['ok']:
+			print('error: could not post file', f)

@@ -1,6 +1,8 @@
 from slackclient import SlackClient
+import os
 
 #TODO: we could cache things like user and channel lists
+sc = None
 
 def just_one(items):
 	'returns the only item in the list if the list has exactly one element'
@@ -48,8 +50,34 @@ def get_channel_id(channel_name):
 	return channel['id']
 
 def dm_user(username, message):
-	#TODO: add support for sending attachements
 	dm_channel_id = get_dm_id(username)
 	if not dm_channel_id: return
 	reply = sc.api_call('chat.postMessage',channel=dm_channel_id, text=message)
+	return reply
+
+def post_message(message, channel_ids):
+	replies = []
+	for c in channel_ids:
+		reply = sc.api_call('chat.postMessage',channel=c, text=message)
+		replies.append(reply)
+	return replies
+
+def post_file(filename, channel_ids):
+	# Slack limits files to 1mb
+	max_size = (1<<20)
+	initial_comment = ''
+	try:
+		with open(filename, 'r') as f:
+			content = f.read(max_size)
+			if os.fstat(f.fileno()).st_size > max_size:
+				initial_comment = 'Warning: file was truncated to limit size to 1mb'
+	except Exception as e:
+		content = str(e)
+		initial_comment = content
+
+	reply = sc.api_call('files.upload',
+					channels=channel_ids,
+					filename=filename,
+					content=content,
+					initial_comment=initial_comment)
 	return reply
