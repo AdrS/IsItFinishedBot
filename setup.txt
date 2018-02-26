@@ -1,0 +1,18 @@
+1.
+Go to https://api.slack.com/apps?new_app=1 and click "Create a New App"
+Fill in the name and workspace with whatever you want
+
+2. Activate Incoming Webhooks
+
+3.
+Select Bot Users under the Features heading and give the bot a display name.
+Click Install your app to your workspace and pick the channel you want it to use. A confirmation message should show up in slack.
+
+4. Select "post to slackbot, which is private to you"
+
+5. Go to Features -> OAuth & Permissions copy the "Bot User OAuth Access Token"
+
+6. Save the app credentials to the file ~/.iifb.json
+	{ "Token": <oauth token> }
+
+see: https://github.com/slackapi/Slack-Python-Onboarding-Tutorial/blob/master/docs/Section-2.md for more details
