@@ -16,6 +16,13 @@ A utility for posting messages to slack when a shell command finishes
 
   ```./iifb.py -u adrs -s "ls -l > tmp.txt" tmp.txt```
   ![What results look like in slack](https://github.com/AdrS/IsItFinishedBot/blob/master/images/example.png)
+  
+ - Use boolean logic
+  
+  ```./iifb.py -u adrs -s "(../run.sh 2>&1 > debug-output.txt && ls -lh > tmp.txt) || tail -n 30 debug-output.txt > tmp.txt" tmp.txt```
+  
+  If `../run.sh 2>&1 > debug-output.txt` succeeds, runs `ls -lh > tmp.txt` and uploads results.
+  If `../run.sh 2>&1 > debug-output.txt` fails, uploads last 30 lines of `debug-output.txt`
 
 # Usage
 ```
